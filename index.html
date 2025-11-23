@@ -163,9 +163,15 @@
                         userInfoDiv.innerHTML = `ผู้ใช้: <span class="font-mono">${userId.substring(0, 8)}...</span>`;
                         listenForAttractions();
                     } else {
-                        // ลงชื่อเข้าใช้แบบนิรนาม
-                        await signInAnonymously(auth);
-                        // ไม่ต้องอัปเดต UI ที่นี่ เพราะ onAuthStateChanged จะถูกเรียกซ้ำเมื่อ signInAnonymously เสร็จ
+                        // 🟢 FIX: เพิ่ม try...catch เพื่อจัดการข้อผิดพลาดในการลงชื่อเข้าใช้แบบนิรนาม
+                        try {
+                            // ลงชื่อเข้าใช้แบบนิรนาม
+                            await signInAnonymously(auth);
+                        } catch (authError) {
+                             userInfoDiv.innerHTML = `❌ Auth Error`;
+                             locationsListDiv.innerHTML = `<div class="col-span-full text-center p-8 bg-red-100 rounded-xl shadow-md text-red-700">ข้อผิดพลาด Auth: ${authError.code}. โปรดตรวจสอบว่าได้เปิดใช้งาน Anonymous Sign-In ใน Firebase แล้ว</div>`;
+                             console.error("Firebase Auth Failed:", authError);
+                        }
                     }
                 });
 
