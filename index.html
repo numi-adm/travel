@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>แผนที่แนะนำสถานที่ท่องเที่ยวเรียลไทม์</title>
+    <!-- โหลด Tailwind CSS สำหรับการจัดสไตล์ที่สวยงามและตอบสนอง -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* กำหนดรูปแบบหลัก */
+        body { font-family: 'Inter', sans-serif; background-color: #f7f7f7; }
+        /* กำหนดขนาดแผนที่ให้ยืดหยุ่นและมีขนาดใหญ่พอ */
+        #map { height: 50vh; width: 100%; border-radius: 0.75rem; }
+        /* สไตล์สำหรับกล่องข้อมูล (Info Window) ของ Google Maps */
+        .info-window-content { padding: 10px; max-width: 250px; }
+        .info-window-content h3 { font-size: 1.1rem; font-weight: 600; margin-bottom: 5px; color: #1e40af; }
+        .info-window-content p { font-size: 0.9rem; color: #333; }
+        .info-window-content small { display: block; margin-top: 5px; color: #6b7280; font-style: italic; }
+        /* สไตล์สำหรับปุ่มหลัก */
+        .btn-primary {
+            background-color: #3b82f6;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            transition: background-color 0.3s;
+        }
+        .btn-primary:hover { background-color: #2563eb; }
+        .input-field {
+            border: 1px solid #d1d5db;
+            padding: 0.5rem;
+            border-radius: 0.5rem;
+            width: 100%;
+            box-sizing: border-box;
+        }
+    </style>
+    <!-- โหลด Google Maps API - ต้องระบุ `key` ในการใช้งานจริง -->
+    <script async defer src="https://maps.googleapis.com/maps/api/js?key=&callback=initMap"></script>
+</head>
+<body class="p-4 md:p-8">
+
+    <header class="mb-6">
+        <h1 class="text-3xl font-bold text-gray-800 mb-2">🌎 แนะนำสถานที่ท่องเที่ยวเรียลไทม์</h1>
+        <p class="text-gray-600">คลิกบนแผนที่เพื่อระบุพิกัด, กรอกข้อมูล แล้วบันทึกสถานที่ใหม่ลงในฐานข้อมูล</p>
+        <div id="user-info" class="text-xs mt-2 p-2 bg-blue-100 text-blue-800 rounded-lg">
+            กำลังโหลดผู้ใช้...
+        </div>
+    </header>
+
+    <!-- ส่วนหลักของแอปพลิเคชัน -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <!-- คอลัมน์สำหรับฟอร์มเพิ่มสถานที่ -->
+        <div class="lg:col-span-1 bg-white p-6 rounded-xl shadow-lg h-full">
+            <h2 class="text-2xl font-semibold mb-4 text-gray-700">เพิ่มสถานที่ใหม่</h2>
+            
+            <div id="add-location-form">
+                
+                <div class="mb-4">
+                    <label for="location-name" class="block text-sm font-medium text-gray-700 mb-1">ชื่อสถานที่</label>
+                    <input type="text" id="location-name" class="input-field" placeholder="เช่น วัดพระแก้ว" required>
+                </div>
+                
+                <div class="mb-4">
+                    <label for="location-description" class="block text-sm font-medium text-gray-700 mb-1">คำอธิบายสั้นๆ</label>
+                    <textarea id="location-description" rows="3" class="input-field" placeholder="เป็นวัดที่สวยงามและสำคัญ..." required></textarea>
+                </div>
+                
+                <div class="mb-4">
+                    <label for="latitude" class="block text-sm font-medium text-gray-700 mb-1">ละติจูด (Latitude)</label>
+                    <input type="text" id="latitude" class="input-field bg-gray-100" readonly placeholder="คลิกบนแผนที่เพื่อกำหนด">
+                </div>
+                
+                <div class="mb-6">
+                    <label for="longitude" class="block text-sm font-medium text-gray-700 mb-1">ลองจิจูด (Longitude)</label>
+                    <input type="text" id="longitude" class="input-field bg-gray-100" readonly placeholder="คลิกบนแผนที่เพื่อกำหนด">
+                </div>
+                
+                <button id="save-btn" class="btn-primary w-full disabled:opacity-50" disabled>
+                    บันทึกสถานที่ (ต้องเลือกพิกัดก่อน)
+                </button>
+            </div>
+            
+            <div id="message-box" class="mt-4 p-3 rounded-lg text-sm hidden"></div>
+        </div>
+        
+        <!-- คอลัมน์สำหรับแผนที่และรายการสถานที่ -->
+        <div class="lg:col-span-2 space-y-6">
+            <div class="bg-white p-4 rounded-xl shadow-lg">
+                <h2 class="text-xl font-semibold mb-4 text-gray-700">แผนที่ Google Maps</h2>
+                <!-- แผนที่จะถูกแสดงผลใน div นี้ -->
+                <div id="map">
+                    <div class="flex items-center justify-center h-full text-gray-500">กำลังโหลดแผนที่...</div>
+                </div>
+            </div>
+
+            <div class="bg-white p-4 rounded-xl shadow-lg">
+                <h2 class="text-xl font-semibold mb-4 text-gray-700">รายการสถานที่ที่บันทึกไว้</h2>
+                <!-- รายการสถานที่จาก Firestore จะถูกแสดงที่นี่ -->
+                <div id="locations-list" class="space-y-3 max-h-96 overflow-y-auto">
+                    <p class="text-gray-500">ไม่มีสถานที่บันทึกไว้</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- โหลด Firebase SDKs -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, doc, addDoc, onSnapshot, query, setDoc, serverTimestamp, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        
+        // ******************************************************
+        // 1. การกำหนดค่า Firebase และตัวแปร Global ที่ได้รับมา
+        // ******************************************************
+
+        // ตั้งค่าระดับการล็อกของ Firestore
+        setLogLevel('Debug');
+
+        // ตัวแปร Global ที่จำเป็นสำหรับ Canvas Environment
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        let app;
+        let db;
+        let auth;
+        let userId = 'loading';
+        let map;
+        const markers = {}; // เก็บรายการ marker เพื่ออัปเดต/ลบ
+        let tempMarker = null; // marker ชั่วคราวสำหรับการเลือกพิกัด
+        const defaultCenter = { lat: 13.736717, lng: 100.523186 }; // กรุงเทพฯ
+
+        const latInput = document.getElementById('latitude');
+        const lngInput = document.getElementById('longitude');
+        const saveBtn = document.getElementById('save-btn');
+        const nameInput = document.getElementById('location-name');
+        const descInput = document.getElementById('location-description');
+        const messageBox = document.getElementById('message-box');
+        const userInfoDiv = document.getElementById('user-info');
+        const locationsListDiv = document.getElementById('locations-list');
+
+        if (!firebaseConfig) {
+            console.error("Firebase configuration is missing.");
+            showStatus("เกิดข้อผิดพลาด: ไม่พบการตั้งค่า Firebase", 'bg-red-200 text-red-800');
+            return;
+        }
+
+        // ******************************************************
+        // 2. การเริ่มต้น Firebase และการรับรองความถูกต้อง
+        // ******************************************************
+        
+        // ฟังก์ชันแสดงข้อความสถานะ
+        function showStatus(message, className) {
+            messageBox.textContent = message;
+            messageBox.className = `mt-4 p-3 rounded-lg text-sm ${className}`;
+            messageBox.classList.remove('hidden');
+            setTimeout(() => {
+                messageBox.classList.add('hidden');
+            }, 5000);
+        }
+
+        // ฟังก์ชันเริ่มต้น Firebase และการรับรองความถูกต้อง
+        async function initializeFirebase() {
+            try {
+                app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+
+                // ตรวจสอบสถานะการรับรองความถูกต้อง
+                onAuthStateChanged(auth, async (user) => {
+                    if (user) {
+                        userId = user.uid;
+                        userInfoDiv.innerHTML = `สถานะ: เข้าสู่ระบบ | ID ผู้ใช้: <span class="font-mono">${userId}</span>`;
+                        console.log("Firebase Auth State Changed. User ID:", userId);
+                        // เมื่อรับรองความถูกต้องแล้ว ให้เริ่มฟังข้อมูล Firestore
+                        listenForAttractions();
+                    } else {
+                        // หากไม่มีผู้ใช้ ให้ลงชื่อเข้าใช้ด้วยโทเค็นหรือแบบไม่ระบุตัวตน
+                        if (initialAuthToken) {
+                            await signInWithCustomToken(auth, initialAuthToken);
+                        } else {
+                            await signInAnonymously(auth);
+                        }
+                    }
+                });
+
+            } catch (error) {
+                console.error("Error initializing Firebase or signing in:", error);
+                showStatus(`เกิดข้อผิดพลาดในการเริ่มต้น Firebase: ${error.message}`, 'bg-red-200 text-red-800');
+            }
+        }
+        
+        // ******************************************************
+        // 3. การจัดการ Google Maps
+        // ******************************************************
+        
+        // ฟังก์ชันเริ่มต้นแผนที่ (ถูกเรียกโดย Google Maps API script)
+        window.initMap = function() {
+            const mapOptions = {
+                center: defaultCenter,
+                zoom: 8,
+                mapId: 'DEMO_MAP_ID', // ใช้ ID แผนที่สาธิต
+            };
+            map = new google.maps.Map(document.getElementById('map'), mapOptions);
+
+            // เพิ่ม Event Listener สำหรับการคลิกแผนที่เพื่อเลือกพิกัด
+            map.addListener('click', (event) => {
+                const lat = event.latLng.lat();
+                const lng = event.latLng.lng();
+                
+                // อัปเดตพิกัดในฟอร์ม
+                latInput.value = lat.toFixed(6);
+                lngInput.value = lng.toFixed(6);
+
+                // ลบ Marker ชั่วคราวเก่าออก
+                if (tempMarker) {
+                    tempMarker.setMap(null);
+                }
+
+                // สร้าง Marker ชั่วคราวใหม่
+                tempMarker = new google.maps.Marker({
+                    position: { lat: lat, lng: lng },
+                    map: map,
+                    title: 'พิกัดที่เลือก',
+                    icon: {
+                        path: google.maps.SymbolPath.CIRCLE,
+                        fillColor: '#ef4444', // สีแดง
+                        fillOpacity: 1,
+                        strokeWeight: 0,
+                        scale: 8
+                    }
+                });
+                
+                // เปิดใช้งานปุ่มบันทึก
+                saveBtn.disabled = false;
+                saveBtn.textContent = 'บันทึกสถานที่';
+            });
+
+            // เมื่อแผนที่พร้อม ให้เริ่มต้น Firebase
+            initializeFirebase();
+        };
+
+        // ฟังก์ชันเพิ่ม Marker ถาวรจากข้อมูล Firestore
+        function addAttractionMarker(attraction) {
+            const position = { lat: attraction.lat, lng: attraction.lng };
+            
+            // สร้าง InfoWindow สำหรับแสดงรายละเอียด
+            const infoWindow = new google.maps.InfoWindow({
+                content: `
+                    <div class="info-window-content">
+                        <h3>${attraction.name}</h3>
+                        <p>${attraction.description}</p>
+                        <small>พิกัด: (${attraction.lat.toFixed(4)}, ${attraction.lng.toFixed(4)})</small>
+                    </div>
+                `
+            });
+
+            // สร้าง Marker
+            const marker = new google.maps.Marker({
+                position: position,
+                map: map,
+                title: attraction.name,
+                animation: google.maps.Animation.DROP,
+                // กำหนดไอคอนเป็นสีน้ำเงินเพื่อแยกจาก Marker ชั่วคราว
+                icon: {
+                    url: 'http://maps.google.com/mapfiles/ms/icons/blue-dot.png'
+                }
+            });
+
+            // เพิ่ม Event Listener เมื่อคลิก Marker
+            marker.addListener('click', () => {
+                infoWindow.open({
+                    anchor: marker,
+                    map,
+                });
+            });
+
+            // เก็บ Marker ไว้ในรายการ
+            markers[attraction.id] = marker;
+            marker.infoWindow = infoWindow; // เก็บ InfoWindow ไว้กับ Marker
+        }
+
+        // ******************************************************
+        // 4. การจัดการ Firestore (การบันทึกและฟังข้อมูล)
+        // ******************************************************
+
+        // ฟังก์ชันบันทึกสถานที่
+        async function saveAttraction(event) {
+            event.preventDefault();
+            
+            const name = nameInput.value.trim();
+            const description = descInput.value.trim();
+            const lat = parseFloat(latInput.value);
+            const lng = parseFloat(lngInput.value);
+
+            if (!name || !description || isNaN(lat) || isNaN(lng)) {
+                showStatus("กรุณากรอกข้อมูลให้ครบถ้วนและเลือกพิกัดบนแผนที่", 'bg-yellow-200 text-yellow-800');
+                return;
+            }
+
+            saveBtn.disabled = true;
+            saveBtn.textContent = 'กำลังบันทึก...';
+            
+            const data = {
+                name,
+                description,
+                lat,
+                lng,
+                userId: userId,
+                timestamp: serverTimestamp()
+            };
+
+            try {
+                // บันทึกในคอลเลกชันสาธารณะเพื่อให้ผู้ใช้ทุกคนเห็น
+                const collectionPath = `/artifacts/${appId}/public/data/attractions`;
+                const docRef = await addDoc(collection(db, collectionPath), data);
+                showStatus(`บันทึกสถานที่: "${name}" เรียบร้อยแล้ว!`, 'bg-green-200 text-green-800');
+
+                // ล้างฟอร์มและ Marker ชั่วคราว
+                nameInput.value = '';
+                descInput.value = '';
+                latInput.value = '';
+                lngInput.value = '';
+                if (tempMarker) {
+                    tempMarker.setMap(null);
+                    tempMarker = null;
+                }
+                saveBtn.disabled = true;
+                saveBtn.textContent = 'บันทึกสถานที่ (ต้องเลือกพิกัดก่อน)';
+
+            } catch (error) {
+                console.error("Error saving document:", error);
+                showStatus(`เกิดข้อผิดพลาดในการบันทึก: ${error.message}`, 'bg-red-200 text-red-800');
+            }
+        }
+
+        // เพิ่ม Event Listener ให้กับปุ่มบันทึก
+        saveBtn.addEventListener('click', saveAttraction);
+
+        // ฟังก์ชันฟังการเปลี่ยนแปลงข้อมูลแบบเรียลไทม์
+        function listenForAttractions() {
+            if (!db || userId === 'loading') return;
+
+            const collectionPath = `/artifacts/${appId}/public/data/attractions`;
+            const q = collection(db, collectionPath);
+            
+            // ใช้ onSnapshot เพื่อฟังการเปลี่ยนแปลงข้อมูลแบบเรียลไทม์
+            onSnapshot(q, (snapshot) => {
+                locationsListDiv.innerHTML = '';
+                const attractions = [];
+
+                if (snapshot.empty) {
+                    locationsListDiv.innerHTML = '<p class="text-gray-500">ยังไม่มีสถานที่แนะนำ</p>';
+                }
+
+                snapshot.docChanges().forEach((change) => {
+                    const data = change.doc.data();
+                    const attraction = { id: change.doc.id, ...data };
+                    
+                    if (change.type === "added" || change.type === "modified") {
+                        // อัปเดตหรือเพิ่ม Marker บนแผนที่
+                        if (map) {
+                            // ลบ Marker เก่าถ้ามีอยู่แล้ว
+                            if (markers[attraction.id]) {
+                                markers[attraction.id].setMap(null);
+                                delete markers[attraction.id];
+                            }
+                            addAttractionMarker(attraction);
+                        }
+                    } else if (change.type === "removed") {
+                        // ลบ Marker ออกจากแผนที่
+                        if (markers[attraction.id]) {
+                            markers[attraction.id].infoWindow.close(); // ปิด InfoWindow ก่อน
+                            markers[attraction.id].setMap(null);
+                            delete markers[attraction.id];
+                        }
+                    }
+                    attractions.push(attraction);
+                });
+
+                // อัปเดตรายการสถานที่ใน UI
+                if (attractions.length > 0) {
+                    attractions.forEach(attraction => {
+                        const dateStr = attraction.timestamp ? new Date(attraction.timestamp.toMillis()).toLocaleString('th-TH') : 'ไม่ระบุเวลา';
+                        
+                        const item = document.createElement('div');
+                        item.className = 'p-3 bg-gray-50 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors';
+                        item.innerHTML = `
+                            <h4 class="text-lg font-medium text-indigo-700">${attraction.name}</h4>
+                            <p class="text-sm text-gray-600">${attraction.description}</p>
+                            <small class="block text-xs text-gray-500 mt-1">
+                                พิกัด: (${attraction.lat.toFixed(4)}, ${attraction.lng.toFixed(4)}) | เพิ่มโดย: ${attraction.userId.substring(0, 8)}... | เมื่อ: ${dateStr}
+                            </small>
+                        `;
+                        // เพิ่ม Event Listener เพื่อซูมไปยัง Marker เมื่อคลิกรายการ
+                        item.addEventListener('click', () => {
+                            if (markers[attraction.id] && map) {
+                                map.setCenter(markers[attraction.id].getPosition());
+                                map.setZoom(14);
+                                google.maps.event.trigger(markers[attraction.id], 'click'); // เปิด InfoWindow
+                            }
+                        });
+                        locationsListDiv.appendChild(item);
+                    });
+                } else {
+                    locationsListDiv.innerHTML = '<p class="text-gray-500">ยังไม่มีสถานที่แนะนำ</p>';
+                }
+
+            }, (error) => {
+                console.error("Error listening to Firestore:", error);
+                showStatus(`เกิดข้อผิดพลาดในการดึงข้อมูลแบบเรียลไทม์: ${error.message}`, 'bg-red-200 text-red-800');
+            });
+        }
+    </script>
+</body>
+</html>
