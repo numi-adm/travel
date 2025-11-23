@@ -86,7 +86,7 @@
                     <h3 class="text-xl font-semibold text-gray-700 mb-3">🛠️ แผงควบคุมและแผนที่</h3>
                     <p class="text-gray-600 mb-4 text-sm">ต้องการเพิ่มหรือแก้ไขสถานที่ท่องเที่ยวใช่หรือไม่?</p>
                     <a href="admin.html" id="admin-link" class="btn-primary w-full block mb-2 text-center text-sm">
-                        ไปที่หน้า Admin (เร็วๆ นี้)
+                        ไปที่หน้า Admin
                     </a>
                     <p class="text-gray-600 mb-4 mt-4 text-sm">ดูพิกัดบนแผนที่ภายนอก:</p>
                     <a href="https://www.google.com/maps" target="_blank" class="text-sm text-blue-500 hover:text-blue-700">
@@ -140,15 +140,18 @@
         const userInfoDiv = document.getElementById('user-info');
         const locationsListDiv = document.getElementById('locations-list');
 
-        // ตรวจสอบว่า Config ถูกใส่แล้วหรือไม่ (ตัดการตรวจสอบ FIREBASE_CONFIG_HERE ออกแล้ว)
+        // ตรวจสอบว่า Config ถูกใส่แล้วหรือไม่
+        let isConfigValid = true;
         if (!FIREBASE_CONFIG.apiKey) {
              userInfoDiv.innerHTML = '<span class="text-red-600">❌ Config ไม่ถูกต้อง</span>';
              locationsListDiv.innerHTML = '<div class="col-span-full text-center p-8 bg-red-100 rounded-xl shadow-md text-red-700">ข้อผิดพลาด: API Key หายไป กรุณาตรวจสอบ Firebase Config</div>';
              console.error("Firebase API Key is missing.");
-             return;
+             isConfigValid = false;
         }
 
         async function initializeFirebase() {
+            if (!isConfigValid) return; // ถ้า Config ไม่ถูกต้อง ไม่ต้องดำเนินการต่อ
+
             try {
                 app = initializeApp(FIREBASE_CONFIG);
                 db = getFirestore(app);
@@ -162,7 +165,7 @@
                     } else {
                         // ลงชื่อเข้าใช้แบบนิรนาม
                         await signInAnonymously(auth);
-                        userInfoDiv.innerHTML = `กำลังเข้าสู่ระบบ...`;
+                        // ไม่ต้องอัปเดต UI ที่นี่ เพราะ onAuthStateChanged จะถูกเรียกซ้ำเมื่อ signInAnonymously เสร็จ
                     }
                 });
 
