@@ -6,15 +6,13 @@
     <title>แผงควบคุม Admin | Travel Map App</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- ⚠️ ขั้นตอนที่ 1: แทนที่ YOUR_GOOGLE_MAPS_API_KEY_HERE ด้วยคีย์จริงของคุณ -->
-    <script async defer src="https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAPS_API_KEY_HERE&callback=initMap"></script>
+    <!-- ⚠️ Google Maps API ถูกนำออกแล้วตามคำขอ -->
     <style>
         :root {
             --admin-color: #059669; /* Green */
             --admin-dark: #047857;
         }
         body { font-family: 'Inter', sans-serif; background-color: #e5e7eb; }
-        #map { height: 400px; width: 100%; border-radius: 0.75rem; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }
         .btn-admin {
             background-color: var(--admin-color);
             color: white;
@@ -36,6 +34,7 @@
             margin: auto;
             margin-top: 10vh;
         }
+        /* ลบสไตล์ #map เนื่องจากไม่มีแผนที่แล้ว */
     </style>
 </head>
 <body class="min-h-screen">
@@ -72,16 +71,14 @@
         <!-- Admin Content (Visible if logged in) -->
         <div id="admin-content" class="grid grid-cols-1 lg:grid-cols-3 gap-6 hidden">
 
-            <!-- Column 1: Add New Location Form & Map -->
+            <!-- Column 1: Add New Location Form (Manual Input) -->
             <div class="lg:col-span-1 space-y-6">
                 
-                <!-- Map Section for Picking Coordinates -->
-                <div class="card">
-                    <h2 class="text-xl font-semibold text-gray-700 mb-3">📍 เลือกพิกัดบนแผนที่</h2>
-                    <p class="text-sm text-gray-500 mb-3">คลิกบนแผนที่เพื่อกำหนดละติจูด/ลองจิจูด</p>
-                    <div id="map">
-                        <div class="flex items-center justify-center h-full text-gray-500">กำลังโหลดแผนที่...</div>
-                    </div>
+                <!-- Coordinate Input Instructions (แทนที่ Map) -->
+                <div class="card bg-yellow-50 border-yellow-300">
+                    <h2 class="text-xl font-semibold text-gray-700 mb-3">🔢 ป้อนพิกัดด้วยตนเอง</h2>
+                    <p class="text-sm text-gray-600 mb-3">กรุณานำค่า Latitude และ Longitude จาก Google Maps หรือแหล่งข้อมูลอื่นมาป้อน</p>
+                    <a href="https://www.google.com/maps" target="_blank" class="text-sm text-blue-500 hover:text-blue-700 font-medium">ค้นหาพิกัดบน Google Maps</a>
                 </div>
 
                 <!-- Add Location Form -->
@@ -94,11 +91,12 @@
                             <textarea id="location-description" rows="3" class="input-field" placeholder="คำอธิบายสั้นๆ เกี่ยวกับสถานที่..." required></textarea>
                             
                             <div class="grid grid-cols-2 gap-2">
-                                <input type="text" id="latitude" class="input-field bg-gray-100 text-sm" readonly placeholder="ละติจูด (คลิกแผนที่)">
-                                <input type="text" id="longitude" class="input-field bg-gray-100 text-sm" readonly placeholder="ลองจิจูด (คลิกแผนที่)">
+                                <!-- เปลี่ยนเป็น Input ปกติที่แก้ไขได้ -->
+                                <input type="number" step="any" id="latitude" class="input-field text-sm" placeholder="ละติจูด (Lat)" required>
+                                <input type="number" step="any" id="longitude" class="input-field text-sm" placeholder="ลองจิจูด (Lng)" required>
                             </div>
 
-                            <button id="save-btn" type="submit" class="btn-admin w-full disabled:opacity-50" disabled>
+                            <button id="save-btn" type="submit" class="btn-admin w-full">
                                 บันทึกสถานที่
                             </button>
                         </div>
@@ -141,12 +139,9 @@
 
         setLogLevel('Debug');
 
-        let app, db, auth, map;
+        let app, db, auth; // ลบ 'map' ออกไป
         let userId = 'loading';
-        const markers = {};
-        let tempMarker = null; 
-        const defaultCenter = { lat: 13.736717, lng: 100.523186 };
-
+        
         const latInput = document.getElementById('latitude');
         const lngInput = document.getElementById('longitude');
         const saveBtn = document.getElementById('save-btn');
@@ -171,9 +166,12 @@
             if (isLoggedIn) {
                 loginSection.classList.add('hidden');
                 adminContent.classList.remove('hidden');
+                // เมื่อเข้าสู่ระบบแล้ว ให้ปุ่มบันทึกใช้งานได้ทันที (เนื่องจากไม่มีการคลิกแผนที่)
+                saveBtn.disabled = false;
             } else {
                 adminContent.classList.add('hidden');
                 loginSection.classList.remove('hidden');
+                saveBtn.disabled = true;
             }
         }
 
@@ -242,53 +240,10 @@
         });
         // -------------------
 
+        // ❌ ลบ window.initMap ออกไปแล้ว เนื่องจากไม่มี Maps API
 
-        // --- Google Maps Logic ---
-        window.initMap = function() {
-            if (typeof google === 'undefined' || !google.maps) {
-                document.getElementById('map').innerHTML = '<div class="flex items-center justify-center h-full text-red-500">❌ กรุณาใส่ Google Maps API Key</div>';
-                initializeFirebase();
-                return;
-            }
-
-            const mapOptions = {
-                center: defaultCenter,
-                zoom: 8,
-                mapId: 'DEMO_MAP_ID',
-                streetViewControl: false,
-                mapTypeControl: false,
-            };
-            map = new google.maps.Map(document.getElementById('map'), mapOptions);
-
-            map.addListener('click', (event) => {
-                const lat = event.latLng.lat();
-                const lng = event.latLng.lng();
-                
-                latInput.value = lat.toFixed(6);
-                lngInput.value = lng.toFixed(6);
-
-                if (tempMarker) { tempMarker.setMap(null); }
-
-                tempMarker = new google.maps.Marker({
-                    position: { lat: lat, lng: lng },
-                    map: map,
-                    title: 'พิกัดที่เลือก',
-                    icon: {
-                        path: google.maps.SymbolPath.CIRCLE,
-                        fillColor: '#ef4444',
-                        fillOpacity: 1,
-                        strokeWeight: 0,
-                        scale: 8
-                    }
-                });
-                
-                saveBtn.disabled = false;
-                saveBtn.textContent = 'บันทึกสถานที่';
-            });
-
-            initializeFirebase();
-        };
-        // -------------------------
+        // 💡 เรียก initializeFirebase โดยตรง
+        initializeFirebase();
 
         function showStatus(message, className) {
             messageBox.textContent = message;
@@ -302,11 +257,12 @@
             
             const name = nameInput.value.trim();
             const description = descInput.value.trim();
-            const lat = parseFloat(latInput.value);
+            // ดึงค่าโดยตรงจาก Input Field
+            const lat = parseFloat(latInput.value); 
             const lng = parseFloat(lngInput.value);
 
             if (!name || !description || isNaN(lat) || isNaN(lng)) {
-                showStatus("กรุณากรอกข้อมูลให้ครบถ้วนและเลือกพิกัดบนแผนที่", 'bg-yellow-200 text-yellow-800');
+                showStatus("กรุณากรอกข้อมูลให้ครบถ้วนและป้อนพิกัดที่ถูกต้อง", 'bg-yellow-200 text-yellow-800');
                 return;
             }
             if (!userId) {
@@ -326,16 +282,16 @@
                 await addDoc(collection(db, collectionPath), data);
                 showStatus(`✅ บันทึกสถานที่: "${name}" เรียบร้อยแล้ว!`, 'bg-green-200 text-green-800');
 
+                // ล้างฟอร์ม (ไม่ต้องลบ Marker)
                 nameInput.value = '';
                 descInput.value = '';
                 latInput.value = '';
                 lngInput.value = '';
-                if (tempMarker) { tempMarker.setMap(null); tempMarker = null; }
-                saveBtn.disabled = true;
+                
+                saveBtn.disabled = false;
                 saveBtn.textContent = 'บันทึกสถานที่';
 
             } catch (error) {
-                // หากการบันทึกล้มเหลว มักเกิดจาก Firestore Rules (Rule ต้อง allow write)
                 showStatus(`❌ ข้อผิดพลาดในการบันทึก: ${error.message}. ตรวจสอบ Firestore Rules (ต้องอนุญาตให้ Admin เขียนได้) ด้วย`, 'bg-red-200 text-red-800');
                 saveBtn.disabled = false;
                 saveBtn.textContent = 'บันทึกสถานที่ (มีข้อผิดพลาด)';
