@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ค้นหาสถานที่ท่องเที่ยว | Travel Map App</title>
+    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         :root {
@@ -11,7 +12,7 @@
             --agoda-light-blue: #3b82f6;
         }
         body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
-     
+        /* Hero Section Styling */
         #hero-section {
             background-color: var(--agoda-blue);
             background-image: url('https://placehold.co/1200x300/1e40af/ffffff?text=Travel+the+World');
@@ -23,8 +24,7 @@
             justify-content: center;
             position: relative;
         }
-     
-        #map { height: 400px; width: 100%; border-radius: 0.75rem; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }
+        /* Card Styling */
         .attraction-card { transition: transform 0.2s, box-shadow 0.2s; cursor: pointer; }
         .attraction-card:hover { transform: translateY(-5px); box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1); }
         .input-field {
@@ -41,13 +41,19 @@
             transition: background-color 0.3s;
         }
         .btn-primary:hover { background-color: #2563eb; }
-        .info-window-content h3 { color: var(--agoda-blue); }
+        .info-card { 
+            background-color: #fff;
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
     </style>
-  
-    <script async defer src="https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAPS_API_KEY_HERE&callback=initMap"></script>
+    <!-- Google Maps API ถูกนำออกแล้ว -->
 </head>
 <body class="min-h-screen">
 
+    <!-- Header / Navigation Bar -->
     <nav class="bg-white shadow-md p-4 flex justify-between items-center sticky top-0 z-10">
         <div class="text-2xl font-bold text-blue-700">🧭 Travel Map</div>
         <div id="user-info" class="text-sm text-gray-600 bg-gray-100 p-2 rounded-full hidden sm:block">
@@ -55,11 +61,11 @@
         </div>
     </nav>
 
-
+    <!-- Hero Section with Search Bar -->
     <div id="hero-section" class="mb-10">
         <div class="bg-white p-6 md:p-8 rounded-xl shadow-2xl w-11/12 max-w-4xl -translate-y-12">
             <h2 class="text-2xl font-bold text-gray-800 mb-4">ค้นหาสถานที่ที่น่าสนใจ</h2>
-
+            <!-- Simulated Search/Filter Bar -->
             <div class="flex flex-col md:flex-row gap-4">
                 <input type="text" placeholder="ค้นหาสถานที่, เมือง หรือประเทศ..." class="input-field flex-grow shadow-inner">
                 <button class="btn-primary w-full md:w-auto">
@@ -72,25 +78,31 @@
     <main class="container mx-auto px-4 -mt-8">
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
             
+            <!-- Column 1: Links and Info (แทนที่ Map) -->
             <div class="lg:col-span-1 space-y-8">
                 
-  
-                <div class="bg-white p-4 rounded-xl shadow-lg">
-                    <h3 class="text-xl font-semibold text-gray-700 mb-3">📍 แผนที่ค้นหาพิกัด</h3>
-                    <div id="map">
-                        <div class="flex items-center justify-center h-full text-gray-500">กำลังโหลดแผนที่...</div>
-                    </div>
+                <!-- Info Card for Admin/Maps -->
+                <div class="info-card">
+                    <h3 class="text-xl font-semibold text-gray-700 mb-3">🛠️ แผงควบคุมและแผนที่</h3>
+                    <p class="text-gray-600 mb-4 text-sm">ต้องการเพิ่มหรือแก้ไขสถานที่ท่องเที่ยวใช่หรือไม่?</p>
+                    <a href="#" id="admin-link" class="btn-primary w-full block mb-2 text-center text-sm">
+                        ไปที่หน้า Admin (เร็วๆ นี้)
+                    </a>
+                    <p class="text-gray-600 mb-4 mt-4 text-sm">ดูพิกัดบนแผนที่ภายนอก:</p>
+                    <a href="https://www.google.com/maps" target="_blank" class="text-sm text-blue-500 hover:text-blue-700">
+                        เปิด Google Maps
+                    </a>
                 </div>
 
- 
+                <div id="message-box" class="mt-4 p-3 rounded-lg text-sm hidden"></div>
 
             </div>
 
-      
+            <!-- Column 2 & 3: Attraction List -->
             <div class="lg:col-span-2">
                 <h2 class="text-2xl font-bold text-gray-800 mb-4">✨ สถานที่แนะนำยอดนิยม (Real-time)</h2>
                 <div id="locations-list" class="grid grid-cols-1 md:grid-cols-2 gap-6">
-      
+                    <!-- Cards will be injected here -->
                     <div class="col-span-full text-center p-8 bg-white rounded-xl shadow-md text-gray-500">
                         กำลังดึงข้อมูลสถานที่จาก Firestore...
                     </div>
@@ -99,40 +111,42 @@
         </div>
     </main>
     
-
+    <!-- JavaScript Section -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, onSnapshot, serverTimestamp, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, onSnapshot, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         
-
+        // ******************************************************
+        // ⚠️ ขั้นตอนที่ 1: แทนที่ FIREBASE_CONFIG ด้วย JSON Object จริงของคุณ
+        // ******************************************************
         const FIREBASE_CONFIG = {
-  apiKey: "AIzaSyB7bEabkGgF_mxmA-l9J6Lvd_3Au2qNX00",
-  authDomain: "travel-roams.firebaseapp.com",
-  projectId: "travel-roams",
-  storageBucket: "travel-roams.firebasestorage.app",
-  messagingSenderId: "745882789310",
-  appId: "1:745882789310:web:dd01bc9121587efbaa45ef",
-  measurementId: "G-FDB92BT0RJ"
-};
+            apiKey: "AIzaSyB7bEabkGgF_mxmA-l9J6Lvd_3Au2qNX00",
+            authDomain: "travel-roams.firebaseapp.com",
+            projectId: "travel-roams",
+            storageBucket: "travel-roams.firebasestorage.app",
+            messagingSenderId: "745882789310",
+            appId: "1:745882789310:web:dd01bc9121587efbaa45ef",
+            measurementId: "G-FDB92BT0RJ"
+        };
         const APP_ID = 'travel-map'; 
 
         setLogLevel('Debug');
 
-        let app, db, auth, map;
+        let app, db, auth;
         let userId = 'loading';
-        const markers = {}; 
-        let tempMarker = null; 
-        const defaultCenter = { lat: 13.736717, lng: 100.523186 };
-
-     
+        
         const messageBox = document.getElementById('message-box');
         const userInfoDiv = document.getElementById('user-info');
         const locationsListDiv = document.getElementById('locations-list');
 
-        if (FIREBASE_CONFIG.apiKey === 'FIREBASE_CONFIG_HERE') {
-            showStatus("⚠️ กรุณาใส่ Firebase Config และ Google Maps API Key", 'bg-red-200 text-red-800');
-            return;
+        // ตรวจสอบว่า Config ถูกใส่แล้วหรือไม่
+        if (!FIREBASE_CONFIG.apiKey || FIREBASE_CONFIG.apiKey === 'FIREBASE_CONFIG_HERE') {
+             // เราจะไม่ใช้ showStatus แต่จะอัปเดต UI โดยตรง
+             userInfoDiv.innerHTML = '<span class="text-red-600">❌ กรุณาใส่ Firebase Config ที่ถูกต้อง</span>';
+             locationsListDiv.innerHTML = '<div class="col-span-full text-center p-8 bg-red-100 rounded-xl shadow-md text-red-700">ข้อผิดพลาด: ไม่พบการตั้งค่า Firebase ที่ถูกต้อง กรุณาตรวจสอบไฟล์ index.html</div>';
+             console.error("Firebase API Key is missing or invalid.");
+             return;
         }
 
         async function initializeFirebase() {
@@ -153,60 +167,21 @@
                 });
 
             } catch (error) {
-                showStatus(`❌ ข้อผิดพลาด Firebase: ${error.message}`, 'bg-red-200 text-red-800');
+                userInfoDiv.innerHTML = `❌ ข้อผิดพลาด Firebase`;
+                console.error(`Error initializing Firebase: ${error.message}`);
             }
         }
         
-        window.initMap = function() {
-            const mapOptions = {
-                center: defaultCenter,
-                zoom: 8,
-                mapId: 'DEMO_MAP_ID',
-                streetViewControl: false,
-                mapTypeControl: false,
-            };
-            map = new google.maps.Map(document.getElementById('map'), mapOptions);
-
-
-
-            initializeFirebase();
-        };
+        // ** ลบ window.initMap ออกไป **
+        initializeFirebase();
 
         function showStatus(message, className) {
-            
+            // ไม่มีการแสดงผลข้อความสถานะในหน้าหลัก
             console.log(`Status: ${message} (Class: ${className})`);
         }
 
-        function addAttractionMarker(attraction) {
-            const position = { lat: attraction.lat, lng: attraction.lng };
-            
-            const infoWindow = new google.maps.InfoWindow({
-                content: `
-                    <div class="info-window-content p-2">
-                        <h3 class="text-lg font-semibold">${attraction.name}</h3>
-                        <p class="text-sm">${attraction.description}</p>
-                    </div>
-                `
-            });
+        // ** ลบฟังก์ชัน addAttractionMarker ออกไป **
 
-            const marker = new google.maps.Marker({
-                position: position,
-                map: map,
-                title: attraction.name,
-                animation: google.maps.Animation.DROP,
-                icon: { url: 'http://maps.google.com/mapfiles/ms/icons/blue-dot.png' }
-            });
-
-            marker.addListener('click', () => {
-                infoWindow.open({ anchor: marker, map });
-            });
-
-            markers[attraction.id] = marker;
-            marker.infoWindow = infoWindow;
-        }
-
-    
-        
         function listenForAttractions() {
             if (!db || userId === 'loading') return;
 
@@ -225,28 +200,18 @@
                     const data = change.doc.data();
                     const attraction = { id: change.doc.id, ...data };
                     
-                    if (change.type === "added" || change.type === "modified") {
-                        if (map) {
-                            if (markers[attraction.id]) {
-                                markers[attraction.id].setMap(null);
-                                delete markers[attraction.id];
-                            }
-                            addAttractionMarker(attraction);
-                        }
-                    } else if (change.type === "removed") {
-                        if (markers[attraction.id]) {
-                            markers[attraction.id].infoWindow.close(); 
-                            markers[attraction.id].setMap(null);
-                            delete markers[attraction.id];
-                        }
-                    }
+                    // ลบ logic การจัดการ Marker ออกไป
+
                     if (change.type !== "removed") { attractions.push(attraction); }
                 });
 
-                
+                // Render cards
                 if (attractions.length > 0) {
                     locationsListDiv.innerHTML = '';
                     attractions.forEach(attraction => {
+                        // สร้างลิงก์ Google Maps สำหรับแต่ละพิกัด
+                        const googleMapsLink = `https://www.google.com/maps/search/?api=1&query=${attraction.lat},${attraction.lng}`;
+                        
                         const dateStr = attraction.timestamp ? new Date(attraction.timestamp.toMillis()).toLocaleDateString('th-TH') : 'ไม่ระบุ';
                         const item = document.createElement('div');
                         item.className = 'attraction-card bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg';
@@ -255,19 +220,18 @@
                             <div class="p-4">
                                 <h4 class="text-xl font-bold text-blue-700 mb-1">${attraction.name}</h4>
                                 <p class="text-sm text-gray-600 mb-2">${attraction.description}</p>
-                                <div class="flex justify-between items-center text-xs text-gray-500 pt-2 border-t mt-2">
+                                
+                                <a href="${googleMapsLink}" target="_blank" class="text-sm text-center text-white bg-green-500 hover:bg-green-600 py-2 px-4 rounded-lg block mt-3 transition-colors">
+                                    📍 ดูพิกัดบน Google Maps
+                                </a>
+
+                                <div class="flex justify-between items-center text-xs text-gray-500 pt-2 border-t mt-3">
                                     <span>✨ By: ${attraction.userId.substring(0, 4)}...</span>
                                     <span>📅 ${dateStr}</span>
                                 </div>
                             </div>
                         `;
-                        item.addEventListener('click', () => {
-                            if (markers[attraction.id] && map) {
-                                map.setCenter(markers[attraction.id].getPosition());
-                                map.setZoom(14);
-                                google.maps.event.trigger(markers[attraction.id], 'click');
-                            }
-                        });
+                        // ลบ Event Listener สำหรับการคลิกการ์ดออก
                         locationsListDiv.appendChild(item);
                     });
                 }
