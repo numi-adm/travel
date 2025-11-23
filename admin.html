@@ -34,7 +34,6 @@
             margin: auto;
             margin-top: 10vh;
         }
-        /* ลบสไตล์ #map เนื่องจากไม่มีแผนที่แล้ว */
     </style>
 </head>
 <body class="min-h-screen">
@@ -73,13 +72,6 @@
 
             <!-- Column 1: Add New Location Form (Manual Input) -->
             <div class="lg:col-span-1 space-y-6">
-                
-                <!-- Coordinate Input Instructions (แทนที่ Map) -->
-                <div class="card bg-yellow-50 border-yellow-300">
-                    <h2 class="text-xl font-semibold text-gray-700 mb-3">🔢 ป้อนพิกัดด้วยตนเอง</h2>
-                    <p class="text-sm text-gray-600 mb-3">กรุณานำค่า Latitude และ Longitude จาก Google Maps หรือแหล่งข้อมูลอื่นมาป้อน</p>
-                    <a href="https://www.google.com/maps" target="_blank" class="text-sm text-blue-500 hover:text-blue-700 font-medium">ค้นหาพิกัดบน Google Maps</a>
-                </div>
 
                 <!-- Add Location Form -->
                 <div class="card border border-admin-color">
@@ -87,11 +79,18 @@
                     
                     <form id="add-location-form" onsubmit="saveAttraction(event)">
                         <div class="space-y-3">
+                            
+                            <!-- Instruction/Link for Coordinates (NEW LOCATION) -->
+                            <p class="text-sm text-gray-600 pt-1">
+                                🔢 กรุณานำค่าพิกัด Latitude และ Longitude มาจาก:
+                                <a href="https://www.google.com/maps" target="_blank" class="text-sm text-blue-500 hover:text-blue-700 font-medium underline">Google Maps</a>
+                            </p>
+
                             <input type="text" id="location-name" class="input-field" placeholder="ชื่อสถานที่ (เช่น ภูชี้ฟ้า)" required>
                             <textarea id="location-description" rows="3" class="input-field" placeholder="คำอธิบายสั้นๆ เกี่ยวกับสถานที่..." required></textarea>
                             
                             <div class="grid grid-cols-2 gap-2">
-                                <!-- เปลี่ยนเป็น Input ปกติที่แก้ไขได้ -->
+                                <!-- Input fields remain editable -->
                                 <input type="number" step="any" id="latitude" class="input-field text-sm" placeholder="ละติจูด (Lat)" required>
                                 <input type="number" step="any" id="longitude" class="input-field text-sm" placeholder="ลองจิจูด (Lng)" required>
                             </div>
@@ -240,8 +239,6 @@
         });
         // -------------------
 
-        // ❌ ลบ window.initMap ออกไปแล้ว เนื่องจากไม่มี Maps API
-
         // 💡 เรียก initializeFirebase โดยตรง
         initializeFirebase();
 
@@ -282,7 +279,7 @@
                 await addDoc(collection(db, collectionPath), data);
                 showStatus(`✅ บันทึกสถานที่: "${name}" เรียบร้อยแล้ว!`, 'bg-green-200 text-green-800');
 
-                // ล้างฟอร์ม (ไม่ต้องลบ Marker)
+                // ล้างฟอร์ม
                 nameInput.value = '';
                 descInput.value = '';
                 latInput.value = '';
