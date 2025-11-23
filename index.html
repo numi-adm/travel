@@ -85,7 +85,7 @@
                 <div class="info-card">
                     <h3 class="text-xl font-semibold text-gray-700 mb-3">🛠️ แผงควบคุมและแผนที่</h3>
                     <p class="text-gray-600 mb-4 text-sm">ต้องการเพิ่มหรือแก้ไขสถานที่ท่องเที่ยวใช่หรือไม่?</p>
-                    <a href="#" id="admin-link" class="btn-primary w-full block mb-2 text-center text-sm">
+                    <a href="admin.html" id="admin-link" class="btn-primary w-full block mb-2 text-center text-sm">
                         ไปที่หน้า Admin (เร็วๆ นี้)
                     </a>
                     <p class="text-gray-600 mb-4 mt-4 text-sm">ดูพิกัดบนแผนที่ภายนอก:</p>
@@ -118,17 +118,17 @@
         import { getFirestore, collection, onSnapshot, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         
         // ******************************************************
-        // ⚠️ ขั้นตอนที่ 1: แทนที่ FIREBASE_CONFIG ด้วย JSON Object จริงของคุณ
+        // ⚠️ Firebase Config ของคุณ
         // ******************************************************
         const FIREBASE_CONFIG = {
-            apiKey: "AIzaSyB7bEabkGgF_mxmA-l9J6Lvd_3Au2qNX00",
-            authDomain: "travel-roams.firebaseapp.com",
-            projectId: "travel-roams",
-            storageBucket: "travel-roams.firebasestorage.app",
-            messagingSenderId: "745882789310",
-            appId: "1:745882789310:web:dd01bc9121587efbaa45ef",
-            measurementId: "G-FDB92BT0RJ"
-        };
+            apiKey: "AIzaSyB7bEabkGgF_mxmA-l9J6Lvd_3Au2qNX00",
+            authDomain: "travel-roams.firebaseapp.com",
+            projectId: "travel-roams",
+            storageBucket: "travel-roams.firebasestorage.app",
+            messagingSenderId: "745882789310",
+            appId: "1:745882789310:web:dd01bc9121587efbaa45ef",
+            measurementId: "G-FDB92BT0RJ"
+        };
         const APP_ID = 'travel-map'; 
 
         setLogLevel('Debug');
@@ -140,12 +140,11 @@
         const userInfoDiv = document.getElementById('user-info');
         const locationsListDiv = document.getElementById('locations-list');
 
-        // ตรวจสอบว่า Config ถูกใส่แล้วหรือไม่
-        if (!FIREBASE_CONFIG.apiKey || FIREBASE_CONFIG.apiKey === 'FIREBASE_CONFIG_HERE') {
-             // เราจะไม่ใช้ showStatus แต่จะอัปเดต UI โดยตรง
-             userInfoDiv.innerHTML = '<span class="text-red-600">❌ กรุณาใส่ Firebase Config ที่ถูกต้อง</span>';
-             locationsListDiv.innerHTML = '<div class="col-span-full text-center p-8 bg-red-100 rounded-xl shadow-md text-red-700">ข้อผิดพลาด: ไม่พบการตั้งค่า Firebase ที่ถูกต้อง กรุณาตรวจสอบไฟล์ index.html</div>';
-             console.error("Firebase API Key is missing or invalid.");
+        // ตรวจสอบว่า Config ถูกใส่แล้วหรือไม่ (ตัดการตรวจสอบ FIREBASE_CONFIG_HERE ออกแล้ว)
+        if (!FIREBASE_CONFIG.apiKey) {
+             userInfoDiv.innerHTML = '<span class="text-red-600">❌ Config ไม่ถูกต้อง</span>';
+             locationsListDiv.innerHTML = '<div class="col-span-full text-center p-8 bg-red-100 rounded-xl shadow-md text-red-700">ข้อผิดพลาด: API Key หายไป กรุณาตรวจสอบ Firebase Config</div>';
+             console.error("Firebase API Key is missing.");
              return;
         }
 
@@ -161,6 +160,7 @@
                         userInfoDiv.innerHTML = `ผู้ใช้: <span class="font-mono">${userId.substring(0, 8)}...</span>`;
                         listenForAttractions();
                     } else {
+                        // ลงชื่อเข้าใช้แบบนิรนาม
                         await signInAnonymously(auth);
                         userInfoDiv.innerHTML = `กำลังเข้าสู่ระบบ...`;
                     }
@@ -172,15 +172,11 @@
             }
         }
         
-        // ** ลบ window.initMap ออกไป **
         initializeFirebase();
 
         function showStatus(message, className) {
-            // ไม่มีการแสดงผลข้อความสถานะในหน้าหลัก
             console.log(`Status: ${message} (Class: ${className})`);
         }
-
-        // ** ลบฟังก์ชัน addAttractionMarker ออกไป **
 
         function listenForAttractions() {
             if (!db || userId === 'loading') return;
@@ -200,8 +196,6 @@
                     const data = change.doc.data();
                     const attraction = { id: change.doc.id, ...data };
                     
-                    // ลบ logic การจัดการ Marker ออกไป
-
                     if (change.type !== "removed") { attractions.push(attraction); }
                 });
 
@@ -231,7 +225,6 @@
                                 </div>
                             </div>
                         `;
-                        // ลบ Event Listener สำหรับการคลิกการ์ดออก
                         locationsListDiv.appendChild(item);
                     });
                 }
