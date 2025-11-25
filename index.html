@@ -239,7 +239,7 @@
                         
                         // 🟢 แก้ไขตรงนี้: เปลี่ยนไปใช้รูปสุ่มสวยๆ จาก Unsplash
                         // ใช้คำค้นหา travel, nature, landmark และใช้ id เพื่อให้รูปไม่ซ้ำกัน
-                        const imageUrl = `https://source.unsplash.com/600x400/?travel,nature,landmark&sig=${attraction.id}`;
+                        const imageUrl = `https://loremflickr.com/600/400/travel,thailand/all?lock=${attraction.id}`;
 
                         const item = document.createElement('div');
                         item.className = 'attraction-card bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg flex flex-col h-full';
