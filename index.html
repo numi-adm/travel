@@ -27,8 +27,8 @@
         /* Hero Section Styling */
         #hero-section {
             background-color: var(--agoda-blue);
-            /* แก้รูปหัวข้อเป็นข้อความภาษาอังกฤษ */
-            background-image: url('https://placehold.co/1200x300/1e40af/ffffff?text=Travel+Thailand'); 
+            /* ใช้รูปวิวสวยๆ สำหรับส่วนหัว */
+            background-image: url('https://source.unsplash.com/1200x300/?travel,thailand,beach'); 
             background-size: cover;
             background-position: center;
             height: 200px;
@@ -37,6 +37,18 @@
             justify-content: center;
             position: relative;
         }
+        /* เพิ่ม Overlay สีเข้มทับรูปหัวข้อเพื่อให้ตัวหนังสืออ่านง่ายขึ้น */
+        #hero-section::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.3);
+        }
+        #hero-section-content {
+            position: relative;
+            z-index: 10;
+        }
+
 
         /* Card Styling */
         .attraction-card { transition: transform 0.2s, box-shadow 0.2s; cursor: pointer; }
@@ -80,7 +92,7 @@
     </nav>
 
     <div id="hero-section" class="mb-10">
-        <div class="bg-white p-6 md:p-8 rounded-xl shadow-2xl w-11/12 max-w-4xl -translate-y-12">
+        <div id="hero-section-content" class="bg-white p-6 md:p-8 rounded-xl shadow-2xl w-11/12 max-w-4xl -translate-y-12">
             <h2 class="text-2xl font-bold text-gray-800 mb-4 text-center md:text-left">ค้นหาสถานที่ที่น่าสนใจ</h2>
             <div class="flex flex-col md:flex-row gap-4">
                 <input type="text" placeholder="พิมพ์ชื่อสถานที่, จังหวัด หรือประเทศ..." class="input-field flex-grow shadow-inner">
@@ -225,8 +237,9 @@
                         const googleMapsLink = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
                         const dateStr = attraction.timestamp ? new Date(attraction.timestamp.toMillis()).toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' }) : 'ไม่ระบุ';
                         
-                        // 🟢 แก้ไขตรงนี้ครับ! ใช้คำว่า Travel แทน ${name} เพื่อไม่ให้ติด ???
-                        const imageUrl = `https://placehold.co/600x400/3b82f6/ffffff?text=Travel`;
+                        // 🟢 แก้ไขตรงนี้: เปลี่ยนไปใช้รูปสุ่มสวยๆ จาก Unsplash
+                        // ใช้คำค้นหา travel, nature, landmark และใช้ id เพื่อให้รูปไม่ซ้ำกัน
+                        const imageUrl = `https://source.unsplash.com/600x400/?travel,nature,landmark&sig=${attraction.id}`;
 
                         const item = document.createElement('div');
                         item.className = 'attraction-card bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg flex flex-col h-full';
