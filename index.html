@@ -3,149 +3,135 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ค้นหาสถานที่ท่องเที่ยว | Travel Map App</title>
+    <title>Travel Map | ค้นหาจุดหมายการเดินทางของคุณ</title>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;700&family=Prompt:wght@300;400;600&display=swap" rel="stylesheet">
-
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
     <style>
-        /* บังคับใช้ฟอนต์ภาษาไทย */
-        body, h1, h2, h3, h4, p, a, button, input, div {
-            font-family: 'Kanit', 'Prompt', sans-serif !important;
+        body {
+            font-family: 'Kanit', sans-serif;
+            background-color: #f8fafc;
         }
-
-        :root {
-            --agoda-blue: #1e40af;
-            --agoda-light-blue: #3b82f6;
+        .hero-gradient {
+            background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
         }
-        
-        body { background-color: #f3f4f6; }
-
-        /* Hero Section Styling */
-        #hero-section {
-            background-color: var(--agoda-blue);
-            /* ใช้รูปวิวสวยๆ สำหรับส่วนหัว */
-            background-image: url('https://source.unsplash.com/1200x300/?travel,thailand,beach'); 
-            background-size: cover;
-            background-position: center;
-            height: 200px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+        .glass-morphism {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .attraction-card {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .attraction-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+        }
+        .line-clamp-2 {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        /* Skeleton Animation */
+        @keyframes shimmer {
+            0% { background-position: -468px 0; }
+            100% { background-position: 468px 0; }
+        }
+        .skeleton {
+            background: #f6f7f8;
+            background-image: linear-gradient(to right, #f6f7f8 0%, #edeef1 20%, #f6f7f8 40%, #f6f7f8 100%);
+            background-repeat: no-repeat;
+            background-size: 800px 104px;
+            display: inline-block;
             position: relative;
-        }
-        /* เพิ่ม Overlay สีเข้มทับรูปหัวข้อเพื่อให้ตัวหนังสืออ่านง่ายขึ้น */
-        #hero-section::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.3);
-        }
-        #hero-section-content {
-            position: relative;
-            z-index: 10;
-        }
-
-
-        /* Card Styling */
-        .attraction-card { transition: transform 0.2s, box-shadow 0.2s; cursor: pointer; }
-        .attraction-card:hover { transform: translateY(-5px); box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1); }
-        
-        .input-field {
-            border: 1px solid #e5e7eb;
-            padding: 0.75rem 1rem;
-            border-radius: 0.5rem;
-            width: 100%;
-        }
-
-        .btn-primary {
-            background-color: var(--agoda-light-blue);
-            color: white;
-            padding: 0.75rem 1.5rem;
-            border-radius: 0.5rem;
-            transition: background-color 0.3s;
-            white-space: nowrap;
-        }
-        .btn-primary:hover { background-color: #2563eb; }
-
-        .info-card { 
-            background-color: #fff;
-            padding: 1.5rem;
-            border-radius: 0.75rem;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            text-align: center;
+            animation: shimmer 1s linear infinite forwards;
         }
     </style>
 </head>
 <body class="min-h-screen">
 
-    <nav class="bg-white shadow-md p-4 flex justify-between items-center sticky top-0 z-10">
-        <div class="text-2xl font-bold text-blue-700 flex items-center gap-2">
-            🧭 <span>Travel Map</span>
-        </div>
-        <div id="user-info" class="text-sm text-gray-600 bg-gray-100 p-2 rounded-full hidden sm:block px-4">
-            กำลังเชื่อมต่อ...
+    <!-- Navigation -->
+    <nav class="bg-white/80 backdrop-blur-md shadow-sm p-4 sticky top-0 z-50">
+        <div class="container mx-auto flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg">
+                    <i class="fas fa-map-marked-alt text-xl"></i>
+                </div>
+                <span class="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-700 to-blue-500">TravelRoams</span>
+            </div>
+            <div class="flex items-center gap-4">
+                <a href="admin.html" class="hidden md:flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-blue-600 transition-colors">
+                    <i class="fas fa-user-shield"></i> สำหรับผู้ดูแล
+                </a>
+                <div id="user-info" class="text-xs bg-gray-100 px-4 py-2 rounded-full text-gray-500 font-medium border border-gray-200">
+                    <i class="fas fa-circle-notch animate-spin mr-1"></i> กำลังโหลด...
+                </div>
+            </div>
         </div>
     </nav>
 
-    <div id="hero-section" class="mb-10">
-        <div id="hero-section-content" class="bg-white p-6 md:p-8 rounded-xl shadow-2xl w-11/12 max-w-4xl -translate-y-12">
-            <h2 class="text-2xl font-bold text-gray-800 mb-4 text-center md:text-left">ค้นหาสถานที่ที่น่าสนใจ</h2>
-            <div class="flex flex-col md:flex-row gap-4">
-                <input type="text" placeholder="พิมพ์ชื่อสถานที่, จังหวัด หรือประเทศ..." class="input-field flex-grow shadow-inner">
-                <button class="btn-primary w-full md:w-auto font-medium">
-                    🔍 ค้นหา
+    <!-- Hero Section -->
+    <section class="hero-gradient pt-20 pb-32 px-4">
+        <div class="container mx-auto text-center">
+            <h1 class="text-4xl md:text-6xl font-bold text-white mb-6 leading-tight">ค้นพบโลกกว้าง <br><span class="text-blue-200">ในแบบที่คุณต้องการ</span></h1>
+            <p class="text-blue-100 text-lg mb-10 max-w-2xl mx-auto font-light">รวมพิกัดลับและสถานที่ท่องเที่ยวยอดฮิตจากทั่วประเทศ อัปเดตแบบเรียลไทม์โดยชุมชนนักเดินทาง</p>
+            
+            <div class="max-w-3xl mx-auto glass-morphism p-2 rounded-2xl shadow-2xl flex flex-col md:flex-row gap-2">
+                <div class="flex-grow flex items-center px-4 gap-3">
+                    <i class="fas fa-search text-blue-500"></i>
+                    <input type="text" id="search-input" placeholder="ค้นหาชื่อสถานที่ หรือจังหวัด..." class="w-full py-4 bg-transparent outline-none text-gray-700 font-medium">
+                </div>
+                <button class="bg-blue-600 hover:bg-blue-700 text-white px-10 py-4 rounded-xl font-bold transition-all shadow-lg active:scale-95">
+                    ค้นหาเลย
                 </button>
             </div>
         </div>
-    </div>
+    </section>
 
-    <main class="container mx-auto px-4 -mt-8 pb-10">
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-             
-            <div class="lg:col-span-1 space-y-8">
-                <div class="info-card">
-                    <h3 class="text-xl font-semibold text-gray-700 mb-3">🛠️ แผงควบคุม</h3>
-                    <p class="text-gray-600 mb-4 text-sm">ต้องการเพิ่มหรือแก้ไขข้อมูลสถานที่ท่องเที่ยว?</p>
-                    <a href="admin.html" id="admin-link" class="btn-primary w-full block mb-2 text-center text-sm shadow-md">
-                        จัดการข้อมูล (Admin)
-                    </a>
-                    <hr class="my-4 border-gray-200">
-                    <p class="text-gray-600 mb-2 text-sm">เครื่องมือภายนอก:</p>
-                    <a href="https://www.google.com/maps" target="_blank" class="text-sm text-blue-500 hover:text-blue-700 font-medium flex items-center justify-center gap-1">
-                        🌏 เปิด Google Maps
-                    </a>
-                </div>
-                <div id="message-box" class="mt-4 p-3 rounded-lg text-sm hidden"></div>
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 -mt-16 pb-20">
+        <div class="flex flex-col md:flex-row justify-between items-end mb-8 gap-4">
+            <div>
+                <h2 class="text-2xl font-bold text-gray-800 flex items-center gap-2">
+                    <i class="fas fa-fire text-orange-500"></i> สถานที่ยอดนิยม
+                </h2>
+                <p class="text-gray-500 text-sm">อัปเดตล่าสุด: <span id="last-update" class="font-medium text-blue-600">กำลังตรวจสอบ...</span></p>
             </div>
-
-            <div class="lg:col-span-2">
-                <div class="flex justify-between items-end mb-4">
-                    <h2 class="text-2xl font-bold text-gray-800">✨ สถานที่แนะนำยอดนิยม</h2>
-                    <span class="text-xs text-green-600 bg-green-100 px-2 py-1 rounded-full animate-pulse">● อัปเดตล่าสุด (Real-time)</span>
-                </div>
-                
-                <div id="locations-list" class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="col-span-full text-center p-12 bg-white rounded-xl shadow-sm text-gray-500 flex flex-col items-center">
-                        <svg class="animate-spin h-8 w-8 text-blue-500 mb-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        กำลังโหลดข้อมูล...
-                    </div>
-                </div>
+            <div class="flex gap-2">
+                <button class="px-4 py-2 bg-white rounded-lg shadow-sm text-sm font-medium text-gray-600 hover:bg-gray-50 border border-gray-100">
+                    <i class="fas fa-filter mr-1"></i> ทั้งหมด
+                </button>
+                <a href="https://www.google.com/maps" target="_blank" class="px-4 py-2 bg-white rounded-lg shadow-sm text-sm font-medium text-green-600 hover:bg-gray-50 border border-gray-100">
+                    <i class="fas fa-location-arrow mr-1"></i> แผนที่โลก
+                </a>
             </div>
         </div>
+
+        <div id="locations-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+            <!-- Skeleton Loading Items -->
+            <div class="bg-white rounded-2xl shadow-sm h-96 skeleton"></div>
+            <div class="bg-white rounded-2xl shadow-sm h-96 skeleton"></div>
+            <div class="bg-white rounded-2xl shadow-sm h-96 skeleton"></div>
+            <div class="bg-white rounded-2xl shadow-sm h-96 skeleton"></div>
+        </div>
     </main>
-     
+
+    <footer class="bg-white border-t border-gray-200 py-10 mt-20">
+        <div class="container mx-auto px-4 text-center">
+            <p class="text-gray-400 text-sm">© 2025 TravelRoams App. สร้างด้วย ❤️ เพื่อนักเดินทางทุกคน</p>
+        </div>
+    </footer>
+
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, onSnapshot, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-         
+        import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
         const FIREBASE_CONFIG = {
             apiKey: "AIzaSyB7bEabkGgF_mxmA-l9J6Lvd_3Au2qNX00",
             authDomain: "travel-roams.firebaseapp.com",
@@ -155,123 +141,92 @@
             appId: "1:745882789310:web:dd01bc9121587efbaa45ef",
             measurementId: "G-FDB92BT0RJ"
         };
-        const APP_ID = 'travel-map'; 
+        const APP_ID = 'travel-map';
 
-        setLogLevel('silent'); 
+        let db, auth, userId;
+        let allAttractions = [];
 
-        let app, db, auth;
-        let userId = 'loading';
-        
-        const messageBox = document.getElementById('message-box');
-        const userInfoDiv = document.getElementById('user-info');
         const locationsListDiv = document.getElementById('locations-list');
+        const searchInput = document.getElementById('search-input');
+        const userInfoDiv = document.getElementById('user-info');
+        const lastUpdateSpan = document.getElementById('last-update');
 
-        let isConfigValid = true;
-        if (!FIREBASE_CONFIG.apiKey) {
-             userInfoDiv.innerHTML = '<span class="text-red-600">❌ Config ไม่ถูกต้อง</span>';
-             locationsListDiv.innerHTML = '<div class="col-span-full text-center p-8 bg-red-50 rounded-xl border border-red-200 text-red-700">ข้อผิดพลาด: ไม่พบ API Key</div>';
-             console.error("Firebase API Key is missing.");
-             isConfigValid = false;
-        }
+        async function init() {
+            const app = initializeApp(FIREBASE_CONFIG);
+            db = getFirestore(app);
+            auth = getAuth(app);
 
-        async function initializeFirebase() {
-            if (!isConfigValid) return;
-
-            try {
-                app = initializeApp(FIREBASE_CONFIG);
-                db = getFirestore(app);
-                auth = getAuth(app);
-
-                onAuthStateChanged(auth, async (user) => {
-                    if (user) {
-                        userId = user.uid;
-                        userInfoDiv.innerHTML = `👤 ผู้ใช้งาน: <span class="font-mono text-blue-600">${userId.substring(0, 6)}...</span>`;
-                        listenForAttractions();
-                    } else {
-                        try {
-                            await signInAnonymously(auth);
-                        } catch (authError) {
-                             userInfoDiv.innerHTML = `❌ เข้าสู่ระบบไม่สำเร็จ`;
-                        }
-                    }
-                });
-
-            } catch (error) {
-                userInfoDiv.innerHTML = `❌ ข้อผิดพลาด Firebase`;
-                console.error(`Error initializing Firebase: ${error.message}`);
-            }
-        }
-        
-        initializeFirebase();
-
-        function listenForAttractions() {
-            if (!db || userId === 'loading') return;
-
-            const collectionPath = `artifacts/${APP_ID}/public/data/attractions`;
-            const q = collection(db, collectionPath);
-            
-            onSnapshot(q, (snapshot) => {
-                const attractions = [];
-
-                if (snapshot.empty) {
-                    locationsListDiv.innerHTML = `
-                        <div class="col-span-full text-center p-12 bg-white rounded-xl border-dashed border-2 border-gray-300 text-gray-500">
-                            <p class="text-lg">📭 ยังไม่มีข้อมูลสถานที่</p>
-                        </div>`;
-                    return; 
+            onAuthStateChanged(auth, async (user) => {
+                if (user) {
+                    userId = user.uid;
+                    userInfoDiv.innerHTML = `<i class="fas fa-user-circle mr-1"></i> ID: ${userId.substring(0, 6)}`;
+                    fetchData();
+                } else {
+                    await signInAnonymously(auth);
                 }
-
-                snapshot.docChanges().forEach((change) => {
-                    const data = change.doc.data();
-                    const attraction = { id: change.doc.id, ...data };
-                    if (change.type !== "removed") { attractions.push(attraction); }
-                });
-
-                if (attractions.length > 0) {
-                    locationsListDiv.innerHTML = '';
-                    attractions.forEach(attraction => {
-                        const name = attraction.name || "ไม่มีชื่อสถานที่";
-                        const desc = attraction.description || "ไม่มีรายละเอียด";
-                        const lat = attraction.lat || "0";
-                        const lng = attraction.lng || "0";
-                        const googleMapsLink = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
-                        const dateStr = attraction.timestamp ? new Date(attraction.timestamp.toMillis()).toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' }) : 'ไม่ระบุ';
-                        
-                        // 🟢 แก้ไขตรงนี้: เปลี่ยนไปใช้รูปสุ่มสวยๆ จาก Unsplash
-                        // ใช้คำค้นหา travel, nature, landmark และใช้ id เพื่อให้รูปไม่ซ้ำกัน
-                        const randomNum = Math.floor(Math.random() * 1000);
-                        
-                        const imageUrl = `https://loremflickr.com/600/400/travel,thailand?random=${randomNum}`;
-
-                        const item = document.createElement('div');
-                        item.className = 'attraction-card bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg flex flex-col h-full';
-                        item.innerHTML = `
-                            <div class="h-48 bg-cover bg-center relative group" style="background-image: url('${imageUrl}');">
-                                <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all duration-300"></div>
-                            </div>
-                            <div class="p-5 flex flex-col flex-grow">
-                                <h4 class="text-xl font-bold text-blue-800 mb-2 leading-tight">${name}</h4>
-                                <p class="text-sm text-gray-600 mb-4 line-clamp-3 flex-grow">${desc}</p>
-                                
-                                <div class="mt-auto">
-                                    <a href="${googleMapsLink}" target="_blank" class="flex items-center justify-center gap-2 text-sm text-white bg-green-500 hover:bg-green-600 py-2 px-4 rounded-lg transition-colors shadow-sm font-medium">
-                                        📍 ดูพิกัดบนแผนที่
-                                    </a>
-
-                                    <div class="flex justify-between items-center text-xs text-gray-400 pt-3 border-t mt-4">
-                                        <span class="flex items-center gap-1">👤 โดย: ${attraction.userId ? attraction.userId.substring(0, 4) : 'User'}...</span>
-                                        <span class="flex items-center gap-1">🕒 ${dateStr}</span>
-                                    </div>
-                                </div>
-                            </div>
-                        `;
-                        locationsListDiv.appendChild(item);
-                    });
-                }
-            }, (error) => {
-                locationsListDiv.innerHTML = `<div class="col-span-full p-4 bg-red-100 text-red-700 rounded-lg text-center">❌ Error: ${error.message}</div>`;
             });
         }
+
+        function fetchData() {
+            const q = collection(db, 'artifacts', APP_ID, 'public', 'data', 'attractions');
+            onSnapshot(q, (snapshot) => {
+                allAttractions = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                render(allAttractions);
+                lastUpdateSpan.textContent = new Date().toLocaleTimeString('th-TH');
+            }, (error) => {
+                locationsListDiv.innerHTML = `<p class="col-span-full text-center text-red-500">ข้อผิดพลาดในการโหลดข้อมูล: ${error.message}</p>`;
+            });
+        }
+
+        function render(items) {
+            if (items.length === 0) {
+                locationsListDiv.innerHTML = `<div class="col-span-full py-20 text-center"><i class="fas fa-search-minus text-4xl text-gray-300 mb-4 block"></i><p class="text-gray-500">ไม่พบสถานที่ที่ต้องการ</p></div>`;
+                return;
+            }
+
+            locationsListDiv.innerHTML = items.map(item => {
+                const img = item.imageData || `https://loremflickr.com/600/400/travel,view?random=${item.id}`;
+                const lat = item.lat || 0;
+                const lng = item.lng || 0;
+                const gmap = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
+                
+                return `
+                    <div class="attraction-card bg-white rounded-3xl overflow-hidden border border-gray-100 flex flex-col h-full group">
+                        <div class="relative h-60 overflow-hidden">
+                            <img src="${img}" alt="${item.name}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
+                            <div class="absolute top-4 right-4 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-[10px] font-bold text-blue-600 shadow-sm">
+                                <i class="fas fa-star mr-1"></i>แนะนำ
+                            </div>
+                        </div>
+                        <div class="p-6 flex flex-col flex-grow">
+                            <h3 class="text-xl font-bold text-gray-800 mb-2 group-hover:text-blue-600 transition-colors">${item.name}</h3>
+                            <p class="text-gray-500 text-sm line-clamp-2 mb-6 font-light">${item.description}</p>
+                            
+                            <div class="mt-auto space-y-4">
+                                <div class="flex items-center justify-between text-[11px] text-gray-400">
+                                    <span class="flex items-center gap-1"><i class="far fa-calendar-alt"></i> ${item.timestamp ? new Date(item.timestamp.toMillis()).toLocaleDateString('th-TH') : 'เร็วๆ นี้'}</span>
+                                    <span class="flex items-center gap-1"><i class="far fa-user"></i> ${item.userId?.substring(0, 4)}...</span>
+                                </div>
+                                <a href="${gmap}" target="_blank" class="flex items-center justify-center gap-2 w-full py-3 bg-blue-50 text-blue-600 rounded-2xl font-bold hover:bg-blue-600 hover:text-white transition-all">
+                                    <i class="fas fa-map-marker-alt"></i> นำทางด้วยแผนที่
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        searchInput.addEventListener('input', (e) => {
+            const val = e.target.value.toLowerCase();
+            const filtered = allAttractions.filter(item => 
+                item.name.toLowerCase().includes(val) || 
+                item.description.toLowerCase().includes(val)
+            );
+            render(filtered);
+        });
+
+        init();
     </script>
 </body>
 </html>
